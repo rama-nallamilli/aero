@@ -1,3 +1,6 @@
+import sbt._
+import Keys._
+
 name := "aero"
 
 lazy val commonSettings = Seq(
@@ -5,6 +8,7 @@ lazy val commonSettings = Seq(
   version := "0.1.0",
   scalaVersion := "2.11.8",
   libraryDependencies ++= Seq(
+    "com.typesafe.akka" %% "akka-http" % "10.0.0",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
   )
 )
