@@ -6,10 +6,15 @@ case class Context(data: Array[Byte], headers: Map[String, Any])
 abstract class Processor[In,Out] {
   def process(input: In, headers: Map[String, Any]): Out
 
-  protected[this] def preProcess(data: Array[Byte], headers: Map[String, Any]) = {
-    //deserailise
-    //validate
-    //process()
+  protected[this] def run(data: Array[Byte], headers: Map[String, Any]) = {
+    import scala.pickling.Defaults._
+    import scala.pickling.binary._
+    //https://github.com/scala/pickling
+    //TODO switch out so can choose any pickle implementation
+    val pick = BinaryPickleArray(data)
+    process(pick.unpickle[AnyRef].asInstanceOf[In], Map.empty[String,Any])
+
+
   }
 
   def validateIn: Class[In]

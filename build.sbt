@@ -9,6 +9,7 @@ lazy val commonSettings = Seq(
   scalaVersion := "2.11.8",
   libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-http" % "10.0.0",
+    "org.scala-lang.modules" %% "scala-pickling" % "0.10.1",   //TODO worker specific move.
     "org.scalatest" %% "scalatest" % "3.0.1" % "test"
   )
 )
