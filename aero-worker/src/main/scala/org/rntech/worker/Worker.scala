@@ -1,37 +1,22 @@
 package org.rntech.worker
 
-import scala.pickling.Defaults._
-import scala.pickling.binary._
+import org.rntech.worker.serialization.{Deserailizer, Serializer}
+
 import scala.util.{Failure, Success, Try}
 
 case class ProcessorFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
 
-trait Deserailizer {
-  def desez(data: Array[Byte]): AnyRef
-}
-
-trait Serializer {
-  def sez[T](a: T): Array[Byte]
-}
-
-object PicklingDeserailizer extends Deserailizer {
-  def desez(data: Array[Byte]): AnyRef = BinaryPickleArray(data).unpickle[AnyRef]
-}
-
-object PicklingSerializer extends Serializer {
-  def sez[T](a: T): Array[Byte] = a.pickle.value
+trait Transformer[I,O] {
+  def transform(in: I): O
 }
 
 abstract class Processor[In, Out] {
 
-  def processors[A, B](fn: A => B)
-
-
+  def fn(in: In): Out
 
   def process(input: In, headers: Map[String, Any]): Out
 
   protected[this] def run(data: Array[Byte], headers: Map[String, Any])(implicit sez: Serializer, desez: Deserailizer) = {
-    //TODO switch out so can choose any parsing implementation?
     val pick = desez.desez(data)
     Try(process(pick.asInstanceOf[In], Map.empty[String, Any])) match {
       case Success(result) =>
@@ -46,6 +31,33 @@ abstract class Processor[In, Out] {
   }
 
   def reportFailure(msg: String, ex: Throwable) = {
+
+  }
+
+}
+
+object E {
+
+  def pTransformers[T,D](fn: (T) => D)(value: T) = {
+    fn.apply(value)
+  }
+
+
+  val firstTransformer: (String) => Int = pTransformers[String,Int](str => str.toInt)
+  val secondTransformer: (Int) => String = pTransformers[Int,String](integer => integer.toString)
+
+
+
+  registerTransformers(firstTransformer, secondTransformer)
+//  registerTransformer(firstTransformer)
+  def registerTransformers[A,B](fn: ((A) => B)*) = {
+
+  }
+
+}
+
+object Processor {
+  def processors[A, B](fn: A => B) = {
 
   }
 
