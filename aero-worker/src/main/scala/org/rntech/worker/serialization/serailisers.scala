@@ -12,10 +12,10 @@ trait Serializer {
 }
 
 
-object PicklingDeserailizer extends Deserailizer {
-  def desez(data: Array[Byte]): AnyRef = BinaryPickleArray(data).unpickle[AnyRef]
-}
-
-object PicklingSerializer extends Serializer {
-  def sez[T](a: T): Array[Byte] = a.pickle.value
-}
+//object PicklingDeserailizer extends Deserailizer {
+//  def desez(data: Array[Byte]): AnyRef = BinaryPickleArray(data).unpickle[AnyRef]
+//}
+//
+//object PicklingSerializer extends Serializer {
+//  def sez[T](a: T): Array[Byte] = a.pickle.value
+//}

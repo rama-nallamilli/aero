@@ -6,13 +6,7 @@ import scala.util.{Failure, Success, Try}
 
 case class ProcessorFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
 
-trait Transformer[I,O] {
-  def transform(in: I): O
-}
-
-abstract class Processor[In, Out] {
-
-  def fn(in: In): Out
+abstract class ProcessorRunner[In, Out](fn: In => Out) {
 
   def process(input: In, headers: Map[String, Any]): Out
 
@@ -36,37 +30,48 @@ abstract class Processor[In, Out] {
 
 }
 
-object E {
+object Prototyping {
+//  def pTransformers[T,D](fn: (T) => D)(value: T) = {
+//    fn.apply(value)
+//  }
+//
+//  val firstTransformer: (String) => Int = pTransformers[String,Int](str => str.toInt)
+//  val secondTransformer: (Int) => String = pTransformers[Int,String](integer => integer.toString)
+//  registerTransformers(firstTransformer, secondTransformer)
+//
+//  def registerTransformers[A,B](fn: ((A) => B)*) = {}
 
-  def pTransformers[T,D](fn: (T) => D)(value: T) = {
-    fn.apply(value)
+
+  type Job = (String,Array[Byte])
+
+  case class DataTransformer[T,D](name: String, fn: (T) => D)
+
+  val first = DataTransformer("transformToString", {
+    s:String =>
+      10
+  })
+
+
+  val second = DataTransformer("fromAIntToAString", {
+    i: Int => "hello"
+  })
+
+  registerDataTransformers("super-data-flow", first, second)
+
+
+  def registerDataTransformers(flowName: String, transformers: DataTransformer[_,_]*) = {
+    transformers.foreach { transformer =>
+
+    }
   }
 
-
-  val firstTransformer: (String) => Int = pTransformers[String,Int](str => str.toInt)
-  val secondTransformer: (Int) => String = pTransformers[Int,String](integer => integer.toString)
-
-
-
-  registerTransformers(firstTransformer, secondTransformer)
-//  registerTransformer(firstTransformer)
-  def registerTransformers[A,B](fn: ((A) => B)*) = {
-
+  val (targetProcessor, data) = JobReciever.recieve()
+  object JobReciever {
+    def recieve(): Job = {
+      val data = "somedata".getBytes
+      ("transformToString", data)
+    }
   }
-
-}
-
-object Processor {
-  def processors[A, B](fn: A => B) = {
-
-  }
-
-}
-
-trait Fetcher[Out] {
-  def fetch(): Out
-
-  def validateOut: Class[Out]
 }
 
 class Worker {
