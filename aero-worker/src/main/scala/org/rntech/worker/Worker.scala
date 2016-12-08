@@ -88,7 +88,7 @@ object Prototyping {
 
   val job = JobReciever.receive()
   val result = Orchastrator.processJob(job)
-  def getNextStageName: String = "" //todo flow needs to be some kind of tree? 
+  def getNextStageName: String = "" //todo flow needs to be some kind of tree?
   val sendResult = result.flatMap { data =>
     JobSender.send(getNextStageName, data)
   }
