@@ -6,17 +6,16 @@ import scala.util.{Failure, Success, Try}
 
 case class ProcessorFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
 
-abstract class ProcessorRunner[In, Out](fn: In => Out) {
+object ProcessorRunner {
 
-  def process(input: In, headers: Map[String, Any]): Out
-
-  protected[this] def run(data: Array[Byte], headers: Map[String, Any])(implicit sez: Serializer, desez: Deserailizer) = {
+  //This class does running and ser/dez, maybe we should really have a sep of concern?, just running?
+  def run[In,Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessorFailed,Array[Byte]] = {
     val pick = desez.desez(data)
-    Try(process(pick.asInstanceOf[In], Map.empty[String, Any])) match {
+    Try(fn(pick.asInstanceOf[In])) match {
       case Success(result) =>
-        sendOutputData(sez.sez(result))
+        Right(sez.sez(result))
       case Failure(ex) =>
-        reportFailure(s"Failure during processing, ${getClass.getSimpleName}", ex)
+        Left(ProcessorFailed("Failure during processing, ${getClass.getSimpleName}", ex))
     }
   }
 
@@ -72,6 +71,13 @@ object Prototyping {
       ("transformToString", data)
     }
   }
+
+  import org.rntech.worker.serialization.Implicits.{dez, sez}
+
+
+  ProcessorRunner.run(first.fn, data)
+  //processor pools that can execute and return, just have one initially?
+
 }
 
 class Worker {
