@@ -7,22 +7,6 @@ import cats.syntax.either._
 
 case class ProcessingFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
 
-
-object ProcessorRunner {
-
-  //This class does running and ser/dez, maybe we should really have a sep of concern?, just running?
-  def run[In, Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessingFailed, Array[Byte]] = {
-    val pick = desez.desez(data)
-    Try(fn(pick.asInstanceOf[In])) match {
-      case Success(result) =>
-        Right(sez.sez(result))
-      case Failure(ex) =>
-        Left(ProcessingFailed("Failure during processing, ${getClass.getSimpleName}", ex))
-    }
-  }
-}
-
-
 object Prototyping {
 
   case class DataTransformer[T, D](name: String, fn: (T) => D, concurrency: Int = 1)
@@ -34,13 +18,13 @@ object Prototyping {
   val transformA = DataTransformer(name = "transformA",
     fn = {
       s: String =>
-        10
+        s.toInt
     })
 
   val transformB = DataTransformer(name = "transformB",
     fn = {
       i: Int =>
-        "hello"
+        s"hello $i"
     })
 
   val flow = Flow("super-data-flow", transformA, transformB)
@@ -58,6 +42,7 @@ object Prototyping {
   case class ProcessingResult(name: String, outputData: Array[Byte])
 
   object Orchastrator {
+    import serialization.Implicits._
     def processJob(job: Job): Either[ProcessingFailed, ProcessingResult] = {
       val (processorName, data) = job
       val transformer = flow.transformers.find(_.name equals processorName) //throw error if not found
@@ -66,13 +51,12 @@ object Prototyping {
       }
     }
 
-    private def run[In, Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessingFailed, Array[Byte]] = {
-      import org.rntech.worker.serialization.Implicits.{dez, sez}
+    private def run[In, Out](fn: In => Out, data: Array[Byte])(implicit serializer: Serializer, deserailizer: Deserailizer): Either[ProcessingFailed, Array[Byte]] = {
 
-      val pick = desez.desez(data)
+      val pick = deserailizer.desez(data)
       Try(fn(pick.asInstanceOf[In])) match {
         case Success(result) =>
-          Right(sez.sez(result))
+          Right(serializer.sez(result))
         case Failure(ex) =>
           Left(ProcessingFailed("Failure during processing, ${getClass.getSimpleName}", ex))
       }
@@ -81,7 +65,6 @@ object Prototyping {
 
   object JobSender {
     def send(name: String, processingResult: ProcessingResult): Either[ProcessingFailed, String] = {
-      processingResult.outputData
       Right("Done")
     }
   }
