@@ -3,81 +3,95 @@ package org.rntech.worker
 import org.rntech.worker.serialization.{Deserailizer, Serializer}
 
 import scala.util.{Failure, Success, Try}
+import cats.syntax.either._
 
-case class ProcessorFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
+case class ProcessingFailed(msg: String, cause: Throwable) extends RuntimeException(cause)
+
 
 object ProcessorRunner {
 
   //This class does running and ser/dez, maybe we should really have a sep of concern?, just running?
-  def run[In,Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessorFailed,Array[Byte]] = {
+  def run[In, Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessingFailed, Array[Byte]] = {
     val pick = desez.desez(data)
     Try(fn(pick.asInstanceOf[In])) match {
       case Success(result) =>
         Right(sez.sez(result))
       case Failure(ex) =>
-        Left(ProcessorFailed("Failure during processing, ${getClass.getSimpleName}", ex))
+        Left(ProcessingFailed("Failure during processing, ${getClass.getSimpleName}", ex))
     }
   }
-
-  def sendOutputData(data: Array[Byte]) = {
-
-  }
-
-  def reportFailure(msg: String, ex: Throwable) = {
-
-  }
-
 }
 
+
 object Prototyping {
-//  def pTransformers[T,D](fn: (T) => D)(value: T) = {
-//    fn.apply(value)
-//  }
-//
-//  val firstTransformer: (String) => Int = pTransformers[String,Int](str => str.toInt)
-//  val secondTransformer: (Int) => String = pTransformers[Int,String](integer => integer.toString)
-//  registerTransformers(firstTransformer, secondTransformer)
-//
-//  def registerTransformers[A,B](fn: ((A) => B)*) = {}
 
+  case class DataTransformer[T, D](name: String, fn: (T) => D, concurrency: Int = 1)
 
-  type Job = (String,Array[Byte])
+  case class Flow(flowName: String, transformers: DataTransformer[_, _]*)
 
-  case class DataTransformer[T,D](name: String, fn: (T) => D)
+  type Job = (String, Array[Byte])
 
-  val first = DataTransformer("transformToString", {
-    s:String =>
-      10
-  })
+  val transformA = DataTransformer(name = "transformA",
+    fn = {
+      s: String =>
+        10
+    })
 
+  val transformB = DataTransformer(name = "transformB",
+    fn = {
+      i: Int =>
+        "hello"
+    })
 
-  val second = DataTransformer("fromAIntToAString", {
-    i: Int => "hello"
-  })
+  val flow = Flow("super-data-flow", transformA, transformB)
 
-  registerDataTransformers("super-data-flow", first, second)
+  //This flow is sent to the cluster and deployed, each node cluster has a JobReciever and a JobSender
+  //The JobReceiver will accept jobs over HTTP, it will then route it an appropriate processor
+  //The JobSender will take the processor output result and send it to the next processor
+  //Each node knows about every flow and where each processor is deployed
 
+  val (targetProcessor, data) = JobReciever.receive()
 
-  def registerDataTransformers(flowName: String, transformers: DataTransformer[_,_]*) = {
-    transformers.foreach { transformer =>
-
-    }
-  }
-
-  val (targetProcessor, data) = JobReciever.recieve()
   object JobReciever {
-    def recieve(): Job = {
-      val data = "somedata".getBytes
-      ("transformToString", data)
+    def receive(): Job = ("transformToString", "someData".getBytes)
+  }
+  case class ProcessingResult(name: String, outputData: Array[Byte])
+
+  object Orchastrator {
+    def processJob(job: Job): Either[ProcessingFailed, ProcessingResult] = {
+      val (processorName, data) = job
+      val transformer = flow.transformers.find(_.name equals processorName) //throw error if not found
+      run(transformer.get.fn, data).map { outData =>
+        ProcessingResult(processorName, outData)
+      }
+    }
+
+    private def run[In, Out](fn: In => Out, data: Array[Byte])(implicit sez: Serializer, desez: Deserailizer): Either[ProcessingFailed, Array[Byte]] = {
+      import org.rntech.worker.serialization.Implicits.{dez, sez}
+
+      val pick = desez.desez(data)
+      Try(fn(pick.asInstanceOf[In])) match {
+        case Success(result) =>
+          Right(sez.sez(result))
+        case Failure(ex) =>
+          Left(ProcessingFailed("Failure during processing, ${getClass.getSimpleName}", ex))
+      }
     }
   }
 
-  import org.rntech.worker.serialization.Implicits.{dez, sez}
+  object JobSender {
+    def send(name: String, processingResult: ProcessingResult): Either[ProcessingFailed, String] = {
+      processingResult.outputData
+      Right("Done")
+    }
+  }
 
-
-  ProcessorRunner.run(first.fn, data)
-  //processor pools that can execute and return, just have one initially?
-
+  val job = JobReciever.receive()
+  val result = Orchastrator.processJob(job)
+  def getNextStageName: String = "" //todo flow needs to be some kind of tree? 
+  val sendResult = result.flatMap { data =>
+    JobSender.send(getNextStageName, data)
+  }
 }
 
 class Worker {
