@@ -11,7 +11,7 @@ class JobsController(jobService: JobService) {
     Flow[Message].mapConcat {
       case tm: TextMessage =>
         //sends ACK or FAIL(Reason) back
-        // TODO mat this stream to get the text?
+        // TODO handle both stream and strict (strict is optimisation)
         // tm.textStream
 
         //jobService.queueJob()
