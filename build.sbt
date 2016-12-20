@@ -11,7 +11,9 @@ lazy val commonSettings = Seq(
     "com.typesafe.akka" %% "akka-http" % "10.0.0",
     "org.scala-lang.modules" %% "scala-pickling" % "0.10.1",   //TODO worker specific move.
     "org.typelevel" %% "cats-core" % "0.8.1",                  //TODO worker specific move.
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+    "com.typesafe" % "config" % "1.3.1",
+    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    "org.json4s" %% "json4s-native" % "3.5.0" //TODO worker specific move.
   )
 )
 
