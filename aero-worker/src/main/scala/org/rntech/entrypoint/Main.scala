@@ -10,6 +10,10 @@ import scala.io.StdIn
 
 object Main extends App {
 
+//  val localhost = InetAddress.getLocalHost
+//  val localIpAddress = localhost.getHostAddress
+//  println(localIpAddress)
+
   implicit val system = ActorSystem("job-actor-system")
   implicit val materializer = ActorMaterializer()
   implicit val executionContext: ExecutionContext = system.dispatcher
