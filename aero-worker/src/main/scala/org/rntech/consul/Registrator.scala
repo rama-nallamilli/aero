@@ -2,27 +2,26 @@ package org.rntech.consul
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpHeader, HttpMethods, HttpRequest}
+import akka.http.scaladsl.model.{HttpMethods, HttpRequest}
 import akka.stream.ActorMaterializer
 
 case class RegistratorConfig(consulHttpUrl: String)
 
 class Registrator(consulHttpUrl: String) {
 
-  def registerSelf(registrationId: String, name: String, tags: Set[String])(implicit system: ActorSystem, materializer: ActorMaterializer) = {
+  def registerSelf(registrationId: String, name: String, hostname: String, port: Int, tags: Set[String] = Set.empty)(implicit system: ActorSystem, materializer: ActorMaterializer) = {
     val registrationEndpoint = s"$consulHttpUrl/v1/agent/service/register"
 
     //https://www.consul.io/docs/agent/http/agent.html#agent_service_register
-    import org.json4s._
     import org.json4s.JsonDSL._
 
     val json = ("ID" -> registrationId) ~
       ("Name" -> name) ~
       ("Tags" -> tags) ~
-      ("Address" -> "TODO") ~
-      ("Port" -> "TODO") ~
+      ("Address" -> hostname) ~
+      ("Port" -> port) ~
       ("Check" -> (
-        ("HTTP" -> "http://localhost:8080/health") ~
+        ("HTTP" -> s"http://$hostname:$port/health") ~
           ("DeregisterCriticalServiceAfter" -> "90m") ~
           ("Interval" -> "10s")))
 
