@@ -13,7 +13,9 @@ lazy val commonSettings = Seq(
     "org.typelevel" %% "cats-core" % "0.8.1",                  //TODO worker specific move.
     "com.typesafe" % "config" % "1.3.1",
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "org.json4s" %% "json4s-native" % "3.5.0" //TODO worker specific move.
+    "org.json4s" %% "json4s-native" % "3.5.0", //TODO worker specific move.
+    "com.github.tomakehurst" % "wiremock" % "2.3.1" % "test", //TODO worker specific move.
+    "org.slf4j" % "slf4j-simple" % "1.7.22"
   )
 )
 

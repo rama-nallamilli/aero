@@ -1,7 +1,8 @@
 package feature
 
-import org.scalatest.FeatureSpec
+import org.scalatest.{DoNotDiscover, FeatureSpec}
 
+@DoNotDiscover
 class JobProcessingFeature extends FeatureSpec {
 
   feature("Processes inbound jobs") {
