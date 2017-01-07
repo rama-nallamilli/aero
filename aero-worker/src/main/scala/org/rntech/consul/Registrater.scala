@@ -40,7 +40,6 @@ class Registrater(consulHttpUrl: String, consulPort: Int) {
           ("DeregisterCriticalServiceAfter" -> "10m") ~
           ("Interval" -> "10s")))
 
-    //TODO find out how to set request timeouts?
     val jsonBody = compact(render(json))
     println(s"$baseUrl/register")
     println(jsonBody)
