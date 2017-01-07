@@ -32,14 +32,9 @@ class JobsController(jobService: JobService)(implicit materializer: Materializer
     }
 
   private val jobStatus =
-    path("jobs" / "status") {
+    path("health") {
       get {
-        complete(HttpEntity(ContentTypes.`application/json`,
-          """
-            |
-            |{"status": "ok" }
-            |
-            | """.stripMargin))
+        complete(HttpEntity(ContentTypes.`application/json`, """{ "status": "ok" }""".stripMargin))
       }
     }
 

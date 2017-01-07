@@ -20,3 +20,9 @@ Distributed stream processing framework
     - replay support i.e checkpoint half way to avoid replay of messages?
         prefer to be in memory, this can be achieved by using a hashing strategy to direct messages
         to the same node (does not guarentee once only delivery but thats okay)
+
+
+```
+export AERO_WORKER_CONSUL_HOST=192.168.99.100
+export AERO_WORKER_SERVICE_HOST=192.168.1.66
+```

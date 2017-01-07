@@ -1,6 +1,4 @@
-version: '2'
-services:
-  consul:
+consul:
     image: consul
     ports:
       - "8500:8500"
