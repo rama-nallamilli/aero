@@ -2,6 +2,13 @@
 Distributed stream processing framework
 
 ## aero-worker
+
+Running tests:
+```
+docker-compose up -d
+sbt "project worker" test
+```
+
 - receive jobs via websocket and respond, initially JSON
 - update websocket to support binary format
 - implement health status page
