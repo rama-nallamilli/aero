@@ -14,6 +14,9 @@ class JobProcessingFeature extends FeatureSpec {
 //    3. send next job to next availble worker (use consul to get the address of the worker that the job needs to go to)
 //    4. the hash key is used to target the node
     scenario("Successfully processes inbound jobs") {
+      //1 send a job for the stubbed flow
+      //2 expect a response back saying received?
+      //3 expect the input to be processed and the output to be sent to a new worker?  how do we test this... maybe stub the worker or expect it to come back to itself?
 
     }
   }
