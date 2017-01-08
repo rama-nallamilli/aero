@@ -8,7 +8,9 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 import org.rntech.consul.Registrater
+import org.rntech.health.HealthController
 import org.rntech.jobs.{JobService, JobsController}
+import akka.http.scaladsl.server.Directives._
 
 import scala.concurrent.{Await, ExecutionContext, Future, blocking}
 import scala.io.StdIn
@@ -25,7 +27,7 @@ object Config {
   val config = ConfigFactory.load()
   val serviceHost = config.getString("aero.worker.service.host")
   val servicePort = config.getInt("aero.worker.service.port")
-  val consulHttpUrl = config.getString("aero.worker.consul.host")
+  val consulHost = config.getString("aero.worker.consul.host")
   val consulPort = config.getInt("aero.worker.consul.port")
 }
 
@@ -35,12 +37,12 @@ object Application {
   implicit val executionContext: ExecutionContext = system.dispatcher
   val jobService = new JobService
   val jobController = new JobsController(jobService)
-  val registrater = new Registrater(Config.consulHttpUrl, Config.consulPort)
+  val registrater = new Registrater(Config.consulHost, Config.consulPort)
   val serviceId = UUID.randomUUID().toString
   var bindingFuture: Future[ServerBinding] = null
 
   def start() = {
-    bindingFuture = Http().bindAndHandle(jobController.routes, "0.0.0.0", Config.servicePort)
+    bindingFuture = Http().bindAndHandle(jobController.routes ~ HealthController.routes, "0.0.0.0", Config.servicePort)
 
     blocking {
       Await.result(registrater.registerSelf(serviceId, Config.serviceHost, Config.servicePort), 2 seconds) match {

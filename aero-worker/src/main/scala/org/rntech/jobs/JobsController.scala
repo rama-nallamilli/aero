@@ -1,7 +1,6 @@
 package org.rntech.jobs
 
 import akka.http.scaladsl.model.ws.{BinaryMessage, Message, TextMessage}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow.fromFunction
@@ -31,12 +30,5 @@ class JobsController(jobService: JobService)(implicit materializer: Materializer
       handleWebSocketMessages(inboundJobStream)
     }
 
-  private val jobStatus =
-    path("health") {
-      get {
-        complete(HttpEntity(ContentTypes.`application/json`, """{ "status": "ok" }""".stripMargin))
-      }
-    }
-
-  def routes = jobStatus ~ inboundJobsRoute
+  def routes = inboundJobsRoute
 }

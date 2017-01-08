@@ -16,10 +16,10 @@ import scala.util.Success
 case class RegisterSuccess(uuid: String, name: String)
 case class ConsulRequestFailed(statusCode: Int, msg: String)
 
-class Registrater(consulHttpUrl: String, consulPort: Int) {
+class Registrater(consulHost: String, consulPort: Int, responseTimeoutSeconds: FiniteDuration = 1 second) {
 
   implicit val formats = DefaultFormats
-  val baseUrl = s"http://$consulHttpUrl:$consulPort/v1/agent/service"
+  val baseUrl = s"http://$consulHost:$consulPort/v1/agent/service"
 
   /*
     Registers with Consul service discovery
@@ -52,7 +52,7 @@ class Registrater(consulHttpUrl: String, consulPort: Int) {
           case StatusCodes.OK =>
             Future.successful(Right(RegisterSuccess(serviceId, name)))
           case _ =>
-            val responseBody = response.entity.toStrict(1 seconds).map(_.data.toString)
+            val responseBody = response.entity.toStrict(responseTimeoutSeconds).map(_.data.toString)
             responseBody.map { body =>
               Left(ConsulRequestFailed(response.status.intValue(), body))
             }
@@ -72,7 +72,7 @@ class Registrater(consulHttpUrl: String, consulPort: Int) {
       response.status match {
         case StatusCodes.OK => Future.successful(Right(Success))
         case _ =>
-          val responseBody = response.entity.toStrict(1 seconds).map(_.data.toString)
+          val responseBody = response.entity.toStrict(responseTimeoutSeconds).map(_.data.toString)
           responseBody.map { body =>
             Left(ConsulRequestFailed(response.status.intValue(), body))
           }
